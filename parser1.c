@@ -3,13 +3,9 @@
 /*       parser1                                                            */
 /*                                                                          */
 /*       Group Members:         ID numbers                                  */
-<<<<<<< HEAD
-/*       Hammad Aljeddani       0003021                                     */
-/*       Ethan O'Brien          11134798                                    */
-=======
 /*                                                                          */
-/*       Hammad Aljeddani        09003021                                   */
->>>>>>> 2a14125fbe8cc173de0fe1aa818629bef26ae224
+/*       Ethan O'Brien          11134798                                    */
+/*       Hammad Aljeddani       09003021                                    */
 /*                                                                          */
 /*                                                                          */
 /*                                                                          */
