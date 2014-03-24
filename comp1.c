@@ -4,7 +4,7 @@
 /*                                                                          */
 /*                                                                          */
 /*       Group Members:          ID numbers                                 */
-/*        Hristo trifonov         11060905                                  */
+/*        Hristo Trifonov         11060905                                  */
 /*        Hammad Aljeddani        09003021                                  */
 /*        Ethan O'Brien           11134798                                  */
 /*                                                                          */
