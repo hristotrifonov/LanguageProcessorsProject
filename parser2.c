@@ -6,7 +6,7 @@
 /*                                                                          */
 /*       Ethan O'Brien          11134798                                    */
 /*       Hammad Aljeddani       09003021                                    */
-/*                                                                          */
+/*       Hristo Trifonov        11060905                                    */
 /*                                                                          */
 /*                                                                          */
 /*                                                                          */
