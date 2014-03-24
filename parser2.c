@@ -4,9 +4,9 @@
 /*                                                                          */
 /*                                                                          */
 /*       Group Members:          ID numbers                                 */
-/*                                                                          */
+/*        Hristo Trifonov         11060905                                  */
 /*        Hammad Aljeddani        09003021                                  */
-/*                                                                          */
+/*        Ethan O'Brien           11134798                                  */
 /*                                                                          */
 /*       Currently this file is just a placeholder (actually a copy of      */
 /*       "smallparser.c").                                                  */
