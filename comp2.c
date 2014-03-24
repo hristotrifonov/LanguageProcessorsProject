@@ -5,9 +5,7 @@
 /*                                                                          */
 /*       Group Members:          ID numbers                                 */
 /*                                                                          */
-/*           John Doe            12345678                                   */
-/*           Jane Murphy         23456789                                   */
-/*           Anthony N. Other    12345679                                   */
+/*        Hammad Aljeddani        09003021                                  */
 /*                                                                          */
 /*                                                                          */
 /*       Currently this file is just a placeholder (actually a copy of      */
