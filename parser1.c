@@ -111,7 +111,8 @@ PUBLIC int main ( int argc, char *argv[] )
 /*                                                                          */
 /*  ParseProgram implements:                                                */
 /*                                                                          */
-/*       <Program>     :== "BEGIN" { <Statement> ";" } "END" "."            */
+/*        <Program>     :== "PROGRAM" <Identifier> ";" [<Declarations>]     */
+/*                         {ProcDeclaration} <Block> "."                    */
 /*                                                                          */
 /*                                                                          */
 /*--------------------------------------------------------------------------*/
