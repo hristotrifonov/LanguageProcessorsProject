@@ -192,7 +192,7 @@ PRIVATE void ParseProcDeclaration(void)
 /*                                                                          */
 /*      <ParameterList> :== "(" <FormalParameter> {"," <FormalParameter>}   */
 /*                              ")"                                         */
-/*                                                                          */                                                                          */
+/*                                                                          */
 /*--------------------------------------------------------------------------*/
 
 PRIVATE void ParseParameterList(void)
