@@ -1,0 +1,60 @@
+The hardest part of the compiler project is just getting started with parser1.c.  Once you have worked out how to write, compile and test this, the reset of the project is not too difficult.
+
+So, getting started with parser1.c
+
+The first thing to do is to get hold of one of the distributions of the project software and make sure that you can install it and get the example program "smallparser" working.  Smallparser is a small parser for a tiny language, and is just intended to show how to use the various modules in the compiler kit software distribution.  I'm going to assume you have got this far, and can generate a smallparser executable from the supplied QtCreator smallparser project.
+
+Change project to parser1 within the QtCreator environment.  This project contains a dummy parser1.c file that is initially just a copy of the smallparser.c code.  It is this file (parser1.c) that you will modify to generate your first parser.
+
+Download and print out a copy of the CPL compiler grammar (from file grammar.pdf).  This will be your essential reference for writing parser1.c
+
+Consider the first production in the grammar:
+
+<Program> ::== "PROGRAM" <Identifier> ";"  [ <Declarations> ]  { <ProcDeclaration> } <Block> "."
+
+This immediately suggests that the first parsing procedure in your parser should be called ParseProgram, and should be called from the main() function after all setup is complete (just as in smallparser.c).  The contents of ParseProgram will be different from those in smallparser's ParseProgram, however, and should be dictated by the <Program> production in the grammar.
+
+So, ParseProgram should look like this:
+
+PRIVATE void ParseProgram( void )
+{
+    Accept( PROGRAM );
+    Accept( IDENTIFIER );
+    Accept( SEMICOLON );
+    if ( CurrentToken.code == VAR )  ParseDeclarations();
+    while ( CurrentToken.code == PROCEDURE )  ParseProcDeclaration();
+    ParseBlock();
+    Accept( ENDOFPROGRAM );
+}
+You can see how the structure of ParseProgram directly reflects the structure of the EBNF production, with "if" statements in the C-code to reflect "[ ]" operators in the production, and "while" statements for "{ }" operators.  
+
+<Program> ::== "PROGRAM" <Identifier> ";"  [ <Declarations> ]  { <ProcDeclaration> } <Block> "."
+
+Notice as well that terminal symbols, in quotes in the EBNF, become calls to Accept in the C-code.  Nonterminal symbols in the EBNF become calls to parsing procedures in the C-code.  Finally, we detect the presence of the "[ ]" operator by looking for something that can start a <Declarations> production in the grammar, which is a "VAR" token, and we detect the presence of the repetition operator "{ }" by looking for the presence of what can start a <ProcDeclaration>, which is a "PROCEDURE" token.
+
+Now we have to add the parsing procedures "ParseDeclarations", "ParseProcedureDeclaration" and "ParseBlock".  This proceeds in an analogous manner to above, by examining the relevant grammar productions and translating them into C-code.  Here, for example, is code for ParseDeclarations.
+
+EBNF:  <Declarations> ::== "VAR" <Variable> { "," <Variable> } ";"
+
+Noting that <Variable> is just defined as an <Identifier>, which is an available pseudo-token provided by the scanner, we could code this as follows:
+
+PRIVATE void ParseDeclarations( void )
+{
+    Accept( VAR );
+    Accept( IDENTIFIER );
+    while ( CurrentToken.code == COMMA )  {
+        Accept( COMMA );
+        Accept( IDENTIFIER );
+    }
+    Accept( SEMICOLON );
+}
+And so it goes on, until all the ParseXXX procedures corresponding to productions in the grammar have been written.
+
+There are a couple of "gotchas" in the process that you need to be aware of.
+
+<IntConst> and <Identifier> are pseudo-terminals returned by the scanner.  That means you don't need to implement them, or any of the productions that define them in the grammar, within your parser.  So your parser shouldn't contain a "ParseIntConst" procedure, or a "ParseIdentifier" procedure, or an "ParseAlphaNum" procedure, etc.
+As <Variable> is trivial (it's always just an identifier), you don't have to code a "ParseVariable" routine (although you can if you like, and it doesn't do any harm).
+The grammar is, very slightly, ambiguous.  An <ActualParameter> can by a <Variable> or an <Expression>.  A <Variable> is just an identifier, but an expression can also start with an identifier.  How to resolve?  For the parsers, and for comp1.c, just call ParseExpression within ParseActualParameter.  The resolution is handled semantically, and isn't needed until comp2.c
+Once you have written the code, don't forget to test it.  You should be able to parse (not compile) the entire language using parser1, so test on a source with nested procedures.
+
+ 

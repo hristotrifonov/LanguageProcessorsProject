@@ -136,7 +136,7 @@ PRIVATE void ParseProgram(void)
 
 /*--------------------------------------------------------------------------*/
 /*                                                                          */
-/*  ParseDeclarations implements:                       */
+/*  ParseDeclarations implements:                     			    */
 /*                                                                          */
 /*      <Declarations> :== "VAR" <Variable> {"," <Variable>} ";"            */
 /*                                                                          */
@@ -158,11 +158,11 @@ PRIVATE void ParseDeclarations(void)
 
 /*--------------------------------------------------------------------------*/
 /*                                                                          */
-/*  ParseProcDeclaration implements:                        */
+/*  ParseProcDeclaration implements:                    		    */
 /*                                                                          */
 /*      <ProcDeclarations> :== "PRODEDURE" <Identifire> [<ParameterList>]   */
-/*              ";" [<Declarations>] {<ProcDeclaration>}    */
-/*              <Block> ";"                     */
+/*              ";" [<Declarations>] {<ProcDeclaration>} 		    */
+/*              <Block> ";"                   				    */
 /*                                                                          */
 /*                                                                          */
 /*--------------------------------------------------------------------------*/
