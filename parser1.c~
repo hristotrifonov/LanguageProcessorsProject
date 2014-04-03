@@ -2,18 +2,13 @@
 /*                                                                          */
 /*       parser1                                                            */
 /*                                                                          */
+/*                                                                          */
 /*       Group Members:         ID numbers                                  */
-/*                                                                          */
-/*       Ethan O'Brien          11134798                                    */
-/*       Hammad Aljeddani       09003021                                    */
-/*       Hristo Trifonov        11060905                                    */
-/*                                                                          */
-/*                                                                          */
+/*              			                           				        */
+/*       Hammad Aljeddani        09003021                                   */
 /*                                                                          */
 /*--------------------------------------------------------------------------*/
 
-/*--------------------------------------------------------------------------*/
-                                                      
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -79,7 +74,7 @@ PRIVATE void ParseIdentifier(void);
 
 /*--------------------------------------------------------------------------*/
 /*                                                                          */
-/*  Main: parser entry point.  Sets up parser globals (opens input and */
+/*  Main: Smallparser entry point.  Sets up parser globals (opens input and */
 /*        output files, initialises current lookahead), then calls          */
 /*        "ParseProgram" to start the parse.                                */
 /*                                                                          */
