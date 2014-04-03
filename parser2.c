@@ -1,6 +1,7 @@
 /*--------------------------------------------------------------------------*/
 /*                                                                          */
-/*       parser1                                                            */
+/*       parser2                                                            */
+/*                                                                          */
 /*                                                                          */
 /*       Group Members:         ID numbers                                  */
 /*                                                                          */
@@ -43,7 +44,17 @@ PRIVATE TOKEN  CurrentToken;       /*  Parser lookahead token.  Updated by  */
 
 PRIVATE int  OpenFiles( int argc, char *argv[] );
 PRIVATE void Accept( int code );
-PRIVATE void ReadToEndOfFile( void );
+PRIVATE void Synchronise(SET *F, SET *FB);
+PRIVATE void SetupSets(void);
+
+PRIVATE SET ProgramStatementFS_aug1;
+PRIVATE SET ProgramStatementFS_aug2;
+PRIVATE SET ProcedureStatementFS_aug1;
+PRIVATE SET ProcedureStatementFS_aug2;
+PRIVATE SET BlockStatementFS_aug;
+PRIVATE SET ProgramStatementFBS;
+PRIVATE SET ProcedureStatementFBS;
+PRIVATE SET BlockStatementFBS;
 
 
 PRIVATE void ParseProgram(void);
@@ -84,18 +95,19 @@ PRIVATE void ParseIdentifier(void);
 /*--------------------------------------------------------------------------*/
 
 PUBLIC int main ( int argc, char *argv[] )
-{   
-    if ( OpenFiles( argc, argv ) )  
+{
+    if ( OpenFiles( argc, argv ) )
     {
     InitCharProcessor( InputFile, ListFile );
     CurrentToken = GetToken();
+    SetupSets();
     ParseProgram();
     fclose( InputFile );
     fclose( ListFile );
     printf("Valid\n");
     return  EXIT_SUCCESS;
     }
-    else 
+    else
     {
         printf("Syntax Error\n");
     return EXIT_FAILURE;
@@ -111,8 +123,7 @@ PUBLIC int main ( int argc, char *argv[] )
 /*                                                                          */
 /*  ParseProgram implements:                                                */
 /*                                                                          */
-/*        <Program>     :== "PROGRAM" <Identifier> ";" [<Declarations>]     */
-/*                         {ProcDeclaration} <Block> "."                    */
+/*       <Program>     :== "BEGIN" { <Statement> ";" } "END" "."            */
 /*                                                                          */
 /*                                                                          */
 /*--------------------------------------------------------------------------*/
@@ -124,15 +135,15 @@ PRIVATE void ParseProgram(void)
     Accept(PROGRAM);
     Accept(IDENTIFIER);
     Accept(SEMICOLON);
-    
-    if(CurrentToken.code == VAR)    
+    Synchronise(&ProgramStatementFS_aug1,&ProgramStatementFBS);
+    if(CurrentToken.code == VAR)
         ParseDeclarations();
-        
+    Synchronise(&ProgramStatementFS_aug2,&ProgramStatementFBS);
     while (CurrentToken.code == PROCEDURE)
-        ParseProcDeclaration(); 
-    
+        ParseProcDeclaration();
+    Synchronise(&ProgramStatementFS_aug2,&ProgramStatementFBS);
     ParseBlock();
-    Accept(ENDOFPROGRAM);   
+    Accept(ENDOFPROGRAM);
 }
 
 /*--------------------------------------------------------------------------*/
@@ -148,13 +159,13 @@ PRIVATE void ParseDeclarations(void)
 {
     Accept(VAR);
     ParseVariable();
-    
+
     while (CurrentToken.code == COMMA)
     {
         Accept(COMMA);
         ParseVariable();
     }
-    Accept(SEMICOLON);  
+    Accept(SEMICOLON);
 }
 
 /*--------------------------------------------------------------------------*/
@@ -172,17 +183,18 @@ PRIVATE void ParseProcDeclaration(void)
 {
     Accept(PROCEDURE);
     Accept(IDENTIFIER);
-    
+
     if(CurrentToken.code == LEFTPARENTHESIS)
         ParseParameterList();
-        
+
     Accept(SEMICOLON);
+    Synchronise(&ProcedureStatementFS_aug1,&ProcedureStatementFBS);
     if(CurrentToken.code == VAR)
         ParseDeclarations();
-        
-    while (CurrentToken.code == PROCEDURE)  
+    Synchronise(&ProcedureStatementFS_aug2,&ProcedureStatementFBS);
+    while (CurrentToken.code == PROCEDURE)
         ParseProcDeclaration();
-    
+    Synchronise(&ProcedureStatementFS_aug2,&ProcedureStatementFBS);
     ParseBlock();
     Accept(SEMICOLON);
 }
@@ -193,14 +205,14 @@ PRIVATE void ParseProcDeclaration(void)
 /*                                                                          */
 /*      <ParameterList> :== "(" <FormalParameter> {"," <FormalParameter>}   */
 /*                              ")"                                         */
-/*                                                                          */                                                                          */
+/*                                                                          */
 /*--------------------------------------------------------------------------*/
 
 PRIVATE void ParseParameterList(void)
 {
     Accept(LEFTPARENTHESIS);
     ParseFormalParameter();
-    
+
     while (CurrentToken.code == COMMA)
     {
         Accept(COMMA);
@@ -222,7 +234,7 @@ PRIVATE void ParseFormalParameter(void)
 {
     if(CurrentToken.code == REF)
         Accept(REF);
-        
+
     ParseVariable();
 }
 
@@ -236,16 +248,18 @@ PRIVATE void ParseFormalParameter(void)
 /*--------------------------------------------------------------------------*/
 
 PRIVATE void ParseBlock(void)
-{   
-    Accept(BEGIN);
-        
-        while (CurrentToken.code == IDENTIFIER || CurrentToken.code == WHILE ||
+{
+   Accept(BEGIN);
+
+   Synchronise(&BlockStatementFS_aug,&BlockStatementFBS);
+    while (CurrentToken.code == IDENTIFIER || CurrentToken.code == WHILE ||
             CurrentToken.code == IF || CurrentToken.code == READ ||
-            CurrentToken.code == WRITE)  
-        {   
+            CurrentToken.code == WRITE){
         ParseStatement();
         Accept(SEMICOLON);
         }
+   Synchronise(&BlockStatementFS_aug,&BlockStatementFBS);
+
         Accept(END);
 }
 
@@ -270,11 +284,7 @@ PRIVATE void ParseStatement(void)
         case READ:ParseReadStatement(); break;
         case WRITE:ParseWriteStatement(); break;
         default:
-                    SyntaxError( IDENTIFIER, CurrentToken );
-                ReadToEndOfFile();
-                    fclose( InputFile );
-                    fclose( ListFile );
-                    exit( EXIT_FAILURE );
+            SyntaxError( IDENTIFIER, CurrentToken );
                     break;
     }
 }
@@ -309,7 +319,7 @@ PRIVATE void ParseRestOfStatement(void)
     {
         case LEFTPARENTHESIS:ParseProcCallList(); break;
         case ASSIGNMENT:ParseAssignment(); break;
-    }   
+    }
 }
 
 /*--------------------------------------------------------------------------*/
@@ -323,17 +333,17 @@ PRIVATE void ParseRestOfStatement(void)
 
 
 PRIVATE void ParseProcCallList(void)
-{   
+{
     Accept(LEFTPARENTHESIS);
-
     ParseActualParameter();
+
     while (CurrentToken.code == COMMA)
-    {       
+    {
         Accept(COMMA);
         ParseActualParameter();
-        ParseExpression();  
+
     }
-    Accept(RIGHTPARENTHESIS);   
+    Accept(RIGHTPARENTHESIS);
 }
 
 /*--------------------------------------------------------------------------*/
@@ -362,10 +372,15 @@ PRIVATE void ParseAssignment(void)
 
 PRIVATE void ParseActualParameter(void)
 {
-    if (CurrentToken.code == SUBTRACT)
-        Accept(SUBTRACT);
-    ParseVariable();
-    ParseExpression();
+    if(CurrentToken.code == IDENTIFIER){
+        ParseVariable();
+    }
+    else if(CurrentToken.code == SUBTRACT || CurrentToken.code == INTCONST || CurrentToken.code == LEFTPARENTHESIS){
+        ParseExpression();
+    }
+    else{
+        SyntaxError(IDENTIFIER,CurrentToken);
+    }
 }
 
 /*--------------------------------------------------------------------------*/
@@ -382,7 +397,7 @@ PRIVATE void ParseWhileStatement(void)
     Accept(WHILE);
     ParseBooleanExpression();
     Accept(DO);
-    ParseBlock();   
+    ParseBlock();
 }
 
 /*--------------------------------------------------------------------------*/
@@ -401,9 +416,9 @@ PRIVATE void ParseIfStatement(void)
     ParseBooleanExpression();
     Accept(THEN);
     ParseBlock();
-    
+
     if (CurrentToken.code == ELSE)
-    {   
+    {
         Accept(ELSE);
         ParseBlock();
     }
@@ -451,14 +466,14 @@ PRIVATE void ParseWriteStatement(void)
 PRIVATE void ParseExpression(void)
 {
     ParseCompoundTerm();
-    
+
     while(CurrentToken.code == ADD || CurrentToken.code == SUBTRACT)
     {
         ParseAddOp();
         ParseCompoundTerm();
     }
 }
- 
+
 /*--------------------------------------------------------------------------*/
 /*                                                                          */
 /*  ParseCompoundTerm implements:                                           */
@@ -466,7 +481,7 @@ PRIVATE void ParseExpression(void)
 /*       <CompoundTerm> :== <Term> {<MultOp> <Term>}                        */
 /*                                                                          */
 /*--------------------------------------------------------------------------*/
-               
+
 
 PRIVATE void ParseCompoundTerm(void)
 {
@@ -491,8 +506,8 @@ PRIVATE void ParseTerm(void)
 {
     if (CurrentToken.code == SUBTRACT)
         Accept(SUBTRACT);
-        
-    ParseSubTerm();     
+
+    ParseSubTerm();
 }
 
 /*--------------------------------------------------------------------------*/
@@ -512,13 +527,9 @@ PRIVATE void ParseSubTerm(void)
         case IDENTIFIER:ParseVariable(); break;
         case INTCONST:ParseIntConst(); break;
         case LEFTPARENTHESIS:Accept(LEFTPARENTHESIS); ParseExpression(); Accept(RIGHTPARENTHESIS); break;
-        /*default:
-                    SyntaxError( IDENTIFIER, CurrentToken );
-                ReadToEndOfFile();
-                    fclose( InputFile );
-                fclose( ListFile );
-                    exit( EXIT_FAILURE );
-                break;  */  
+        default:
+        SyntaxError(IDENTIFIER,CurrentToken);
+                break;
     }
 }
 
@@ -554,11 +565,7 @@ PRIVATE void ParseAddOp(void)
         case ADD:Accept(ADD); break;
         case SUBTRACT:Accept(SUBTRACT); break;
         default:
-                    SyntaxError( MULTIPLY, CurrentToken );
-                    ReadToEndOfFile();
-                    fclose( InputFile );
-                    fclose( ListFile );
-                    exit( EXIT_FAILURE );
+            SyntaxError( IDENTIFIER, CurrentToken );
                     break;
     }
 }
@@ -579,11 +586,7 @@ PRIVATE void ParseMultOp(void)
         case MULTIPLY:Accept(MULTIPLY); break;
         case DIVIDE:Accept(DIVIDE); break;
         default:
-                    SyntaxError( MULTIPLY, CurrentToken );
-                ReadToEndOfFile();
-                    fclose( InputFile );
-                    fclose( ListFile );
-                    exit( EXIT_FAILURE );
+            SyntaxError( IDENTIFIER, CurrentToken );
                     break;
     }
 }
@@ -607,11 +610,7 @@ PRIVATE void ParseRelOp(void)
         case LESS:Accept(LESS); break;
         case GREATER:Accept(GREATER); break;
         default:
-                    SyntaxError( MULTIPLY, CurrentToken );
-                ReadToEndOfFile();
-                    fclose( InputFile );
-                    fclose( ListFile );
-                    exit( EXIT_FAILURE );
+            SyntaxError( IDENTIFIER, CurrentToken );
                     break;
     }
 }
@@ -645,7 +644,7 @@ PRIVATE void ParseIntConst(void)
     while(CurrentToken.code == INTCONST)
     {
         Accept(INTCONST);
-    }   
+    }
 }
 
 /*--------------------------------------------------------------------------*/
@@ -661,7 +660,7 @@ PRIVATE void ParseIdentifier(void)
 {
     Accept(IDENTIFIER);
     while(CurrentToken.code == IDENTIFIER)
-    {       
+    {
         Accept(IDENTIFIER);
     }
 }
@@ -699,18 +698,85 @@ PRIVATE void ParseIdentifier(void)
 
 PRIVATE void Accept( int ExpectedToken )
 {
-    int static recovery = 0;
-    if(recovery){
+    static int recovering = 0;
+
+    if(recovering){
         while(CurrentToken.code != ExpectedToken && CurrentToken.code != ENDOFINPUT)
             CurrentToken = GetToken();
-        recovery = 0
+        recovering = 0;
     }
-    if(CurrentToken.code != ExpectedToken ){
-        SyntaxError(ExpectedToken , CurrentToken);
-        recovery = 1;
+
+    if ( CurrentToken.code != ExpectedToken )  {
+    SyntaxError( ExpectedToken, CurrentToken );
+    recovering = 1;
     }
     else  CurrentToken = GetToken();
 }
+
+
+/*--------------------------------------------------------------------------*/
+/*                                                                          */
+/*                       S-Algol Error Recovery                             */
+/*                                                                          */
+/*  The Synchronise() function with two Arguments                           */
+/*                                                                          */
+/*--------------------------------------------------------------------------*/
+
+PRIVATE void Synchronise(SET *F, SET *FB){
+
+    SET S;
+
+    S = Union(2,F,FB);
+    if(!InSet(F,CurrentToken.code)){
+        SyntaxError2(*F,CurrentToken);
+        while(!InSet(&S,CurrentToken.code)){
+            CurrentToken = GetToken();
+        }
+    }
+}
+
+
+
+/*--------------------------------------------------------------------------*/
+/*                                                                          */
+/*                       S-Algol Error Recovery                             */
+/*                                                                          */
+/*  SetupSets() function                                                    */
+/*                                                                          */
+/*--------------------------------------------------------------------------*/
+
+PRIVATE void SetupSets(void){
+
+    /*Program First (1)*/
+    ClearSet(&ProgramStatementFS_aug1);
+    AddElements(&ProgramStatementFS_aug1,3,VAR,PROCEDURE,BEGIN);
+    /*Program First (2)*/
+    ClearSet(&ProgramStatementFS_aug2);
+    AddElements(&ProgramStatementFS_aug2,2,PROCEDURE,BEGIN);
+    /*Program Follow + Beacon*/
+    ClearSet(&ProgramStatementFBS);
+    AddElements(&ProgramStatementFBS,3,END,ENDOFPROGRAM,ENDOFINPUT);
+
+    /*Procedure First (1)*/
+    ClearSet(&ProcedureStatementFS_aug1);
+    AddElements(&ProcedureStatementFS_aug1,3,VAR,PROCEDURE,BEGIN);
+    /*Procedure First (2)*/
+    ClearSet(&ProcedureStatementFS_aug2);
+    AddElements(&ProcedureStatementFS_aug2,2,PROCEDURE,BEGIN);
+    /*Procedure Follow + Beacon*/
+    ClearSet(&ProcedureStatementFBS);
+    AddElements(&ProcedureStatementFBS,3,END,ENDOFPROGRAM,ENDOFINPUT);
+
+    /*Block First*/
+    ClearSet(&BlockStatementFS_aug);
+    AddElements(&BlockStatementFS_aug,6,END,IDENTIFIER,WHILE,IF,READ,WRITE);
+    /*Block Follow + Beacons*/
+    ClearSet(&BlockStatementFBS);
+    AddElements(&BlockStatementFBS,4,SEMICOLON,ELSE,ENDOFPROGRAM,ENDOFINPUT);
+
+}
+
+
 
 
 /*--------------------------------------------------------------------------*/
@@ -739,7 +805,7 @@ PRIVATE void Accept( int ExpectedToken )
 
 PRIVATE int  OpenFiles( int argc, char *argv[] )
 {
-    
+
 
     if ( argc != 3 )  {
         fprintf( stderr, "%s <inputfile> <listfile>\n", argv[0] );
@@ -759,4 +825,3 @@ PRIVATE int  OpenFiles( int argc, char *argv[] )
 
     return 1;
 }
-

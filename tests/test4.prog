@@ -6,7 +6,7 @@ BEGIN
     BEGIN
         IF x >= 10 THEN
         BEGIN
-            WRITE( x, 10, x - 10 );
+            WRITE( x, 10, (x - 90) );
         END
         ELSE 
         BEGIN
