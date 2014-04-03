@@ -1,7 +1,8 @@
 /*--------------------------------------------------------------------------*/
 /*                                                                          */
-/*       parser2                                                            */
+/*       parser1                                                            */
 /*                                                                          */
+/*       Group Members:         ID numbers                                  */
 /*                                                                          */
 /*       Group Members:         ID numbers                                  */
 /*                                                                          */
@@ -86,9 +87,38 @@ PRIVATE void ParseIntConst(void);
 PRIVATE void ParseIdentifier(void);
 
 
+PRIVATE void ParseProgram(void);
+PRIVATE void ParseDeclarations(void);
+PRIVATE void ParseProcDeclaration(void);
+PRIVATE void ParseParameterList(void);
+PRIVATE void ParseFormalParameter(void);
+PRIVATE void ParseBlock(void);
+PRIVATE void ParseStatement(void);
+PRIVATE void ParseSimpleStatement(void);
+PRIVATE void ParseRestOfStatement(void);
+PRIVATE void ParseProcCallList(void);
+PRIVATE void ParseAssignment(void);
+PRIVATE void ParseActualParameter(void);
+PRIVATE void ParseWhileStatement(void);
+PRIVATE void ParseIfStatement(void);
+PRIVATE void ParseReadStatement(void);
+PRIVATE void ParseWriteStatement(void);
+PRIVATE void ParseExpression(void);
+PRIVATE void ParseCompoundTerm(void);
+PRIVATE void ParseTerm(void);
+PRIVATE void ParseSubTerm(void);
+PRIVATE void ParseBooleanExpression(void);
+PRIVATE void ParseAddOp(void);
+PRIVATE void ParseMultOp(void);
+PRIVATE void ParseRelOp(void);
+PRIVATE void ParseVariable(void);
+PRIVATE void ParseIntConst(void);
+PRIVATE void ParseIdentifier(void);
+
+
 /*--------------------------------------------------------------------------*/
 /*                                                                          */
-/*  Main: Smallparser entry point.  Sets up parser globals (opens input and */
+/*  Main: parser entry point.  Sets up parser globals (opens input and */
 /*        output files, initialises current lookahead), then calls          */
 /*        "ParseProgram" to start the parse.                                */
 /*                                                                          */
@@ -100,7 +130,7 @@ PUBLIC int main ( int argc, char *argv[] )
     {
     InitCharProcessor( InputFile, ListFile );
     CurrentToken = GetToken();
-    SetupSets();
+    SetupSets(); 
     ParseProgram();
     fclose( InputFile );
     fclose( ListFile );
@@ -135,6 +165,7 @@ PRIVATE void ParseProgram(void)
     Accept(PROGRAM);
     Accept(IDENTIFIER);
     Accept(SEMICOLON);
+
     Synchronise(&ProgramStatementFS_aug1,&ProgramStatementFBS);
     if(CurrentToken.code == VAR)
         ParseDeclarations();
@@ -159,7 +190,6 @@ PRIVATE void ParseDeclarations(void)
 {
     Accept(VAR);
     ParseVariable();
-
     while (CurrentToken.code == COMMA)
     {
         Accept(COMMA);
@@ -353,8 +383,6 @@ PRIVATE void ParseProcCallList(void)
 /*       <Assignment> :== ":=" <Expression>                                 */
 /*                                                                          */
 /*--------------------------------------------------------------------------*/
-
-
 PRIVATE void ParseAssignment(void)
 {
     Accept(ASSIGNMENT);
@@ -372,15 +400,7 @@ PRIVATE void ParseAssignment(void)
 
 PRIVATE void ParseActualParameter(void)
 {
-    if(CurrentToken.code == IDENTIFIER){
-        ParseVariable();
-    }
-    else if(CurrentToken.code == SUBTRACT || CurrentToken.code == INTCONST || CurrentToken.code == LEFTPARENTHESIS){
         ParseExpression();
-    }
-    else{
-        SyntaxError(IDENTIFIER,CurrentToken);
-    }
 }
 
 /*--------------------------------------------------------------------------*/
@@ -473,7 +493,6 @@ PRIVATE void ParseExpression(void)
         ParseCompoundTerm();
     }
 }
-
 /*--------------------------------------------------------------------------*/
 /*                                                                          */
 /*  ParseCompoundTerm implements:                                           */
@@ -481,7 +500,6 @@ PRIVATE void ParseExpression(void)
 /*       <CompoundTerm> :== <Term> {<MultOp> <Term>}                        */
 /*                                                                          */
 /*--------------------------------------------------------------------------*/
-
 
 PRIVATE void ParseCompoundTerm(void)
 {
@@ -622,8 +640,6 @@ PRIVATE void ParseRelOp(void)
 /*       <Variable> :== <Identifier>                                        */
 /*                                                                          */
 /*--------------------------------------------------------------------------*/
-
-
 PRIVATE void ParseVariable(void)
 {
     ParseIdentifier();
@@ -636,8 +652,6 @@ PRIVATE void ParseVariable(void)
 /*       <Variable> :== <Digit> { <Digit> }                                 */
 /*                                                                          */
 /*--------------------------------------------------------------------------*/
-
-
 PRIVATE void ParseIntConst(void)
 {
     Accept(INTCONST);
@@ -654,8 +668,6 @@ PRIVATE void ParseIntConst(void)
 /*       <Identifier> :== <Alpha> { <AlphaNum> }                            */
 /*                                                                          */
 /*--------------------------------------------------------------------------*/
-
-
 PRIVATE void ParseIdentifier(void)
 {
     Accept(IDENTIFIER);
@@ -805,6 +817,7 @@ PRIVATE void SetupSets(void){
 
 PRIVATE int  OpenFiles( int argc, char *argv[] )
 {
+    
 
 
     if ( argc != 3 )  {
