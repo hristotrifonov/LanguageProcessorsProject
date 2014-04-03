@@ -5,6 +5,5 @@
 for f in $(ls tests/test*.prog)
 do
 	echo -e "$f\t" $(./$1 $f out)
-#" $(pwd)/$f out")
 done
 
