@@ -5,8 +5,11 @@
 /*                                                                          */
 /*       Group Members:         ID numbers                                  */
 /*                                                                          */
-/*       Hammad Aljeddani        09003021                                   */
-/*       Ethan O'Brien           11134798                                   */
+/*       Ethan O'Brien          11134798                                    */
+/*       Hammad Aljeddani       09003021                                    */
+/*       Hristo Trifonov        11060905                                    */
+/*                                                                          */
+/*                                                                          */
 /*--------------------------------------------------------------------------*/
 
 
@@ -854,6 +857,11 @@ PRIVATE int  OpenFiles( int argc, char *argv[] )
     if ( NULL == ( ListFile = fopen( argv[2], "w" ) ) )  {
         fprintf( stderr, "cannot open \"%s\" for output\n", argv[2] );
         fclose( InputFile );
+        return 0;
+    }
+
+    if ( NULL == ( CodeFile = fopen( argv[3], "w" ) ) )  {
+        fprintf( stderr, "cannot open \"%s\" for output\n", argv[3] );
         return 0;
     }
 
