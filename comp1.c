@@ -33,6 +33,7 @@
 PRIVATE FILE *InputFile;           /*  CPL source comes from here.          */
 PRIVATE FILE *ListFile;            /*  For nicely-formatted syntax errors.  */
 PRIVATE FILE *CodeFile;
+PRIVATE int varaddress;
 
 PRIVATE TOKEN  CurrentToken;       /*  Parser lookahead token.  Updated by  */
                                    /*  routine Accept (below).  Must be     */
@@ -76,7 +77,7 @@ PRIVATE void ParseFormalParameter(void);
 PRIVATE void ParseBlock(void);
 PRIVATE void ParseStatement(void);
 PRIVATE void ParseSimpleStatement(void);
-PRIVATE void ParseRestOfStatement(void);
+PRIVATE void ParseRestOfStatement(SYMBOL *var);
 PRIVATE void ParseProcCallList(void);
 PRIVATE void ParseAssignment(void);
 PRIVATE void ParseActualParameter(void);
@@ -112,6 +113,7 @@ PUBLIC int main ( int argc, char *argv[] )
         InitCharProcessor( InputFile, ListFile );
         InitCodeGenerator(CodeFile); /*Initialize code generation*/
         CurrentToken = GetToken();
+        varaddress = 0;
         SetupSets();
         ParseProgram();
         WriteCodeFile();  /*Write out assembly to file*/
@@ -146,6 +148,7 @@ PUBLIC int main ( int argc, char *argv[] )
 
 PRIVATE void ParseProgram(void)
 {
+	
     Accept(PROGRAM);
     /*Lookahead token it should be the Program's name, so we call the MakeSymbolTableEntry*/
     MakeSymbolTableEntry(STYPE_PROGRAM);
@@ -174,23 +177,22 @@ PRIVATE void ParseProgram(void)
 
 PRIVATE void ParseDeclarations(void)
 {
-
+	int varcount = 0;
     Accept(VAR);
-
+	
     MakeSymbolTableEntry(STYPE_VARIABLE);
     Accept(IDENTIFIER);
-    /*ParseVariable();  ParseVariable() --> ParseIdentifier() --> Accept(IDENTIFIER);*/
-
+	varcount++;
     while (CurrentToken.code == COMMA)
     {
         Accept(COMMA);
         MakeSymbolTableEntry(STYPE_VARIABLE);
         Accept(IDENTIFIER);
-
-        /*ParseVariable(); ParseVariable() --> ParseIdentifier() --> Accept(IDENTIFIER);*/
-        /*ParseIdentifier();*/
+		varcount++;        
     }
     Accept(SEMICOLON);
+    Emit(I_INC, varcount);
+    DumpSymbols(0);
 
 }
 
@@ -337,9 +339,10 @@ PRIVATE void ParseStatement(void)
 
 PRIVATE void ParseSimpleStatement(void)
 {
+    SYMBOL *var;
     var = LookupSymbol();
-    ParseVariable(); /* ParseVariable() --> ParseIdentifier() --> Accept(IDENTIFIER); */
-    ParseRestOfStatement();
+    Accept(IDENTIFIER); /* ParseVariable() --> ParseIdentifier() --> Accept(IDENTIFIER); */
+    ParseRestOfStatement(var);
 }
 
 /*--------------------------------------------------------------------------*/
@@ -351,12 +354,36 @@ PRIVATE void ParseSimpleStatement(void)
 /*--------------------------------------------------------------------------*/
 
 
-PRIVATE void ParseRestOfStatement(void)
+PRIVATE void ParseRestOfStatement(SYMBOL *var)
 {
     switch(CurrentToken.code)
     {
-        case LEFTPARENTHESIS:ParseProcCallList(); break;
-        case ASSIGNMENT:ParseAssignment(); break;
+        case LEFTPARENTHESIS:
+			ParseProcCallList(); 
+		case SEMICOLON: 
+			if ( var != NULL ) {
+				if ( var->type == STYPE_PROCEDURE ) {
+					Emit( I_CALL, var->address ); 
+				}
+				else { 
+					printf("error in parse rest of statement semicolon case");
+					KillCodeGeneration(); 
+				} 
+			}
+			break; 
+        case ASSIGNMENT:
+        default: 
+			ParseAssignment(); 
+			if ( var != NULL ) {
+				if ( var->type == STYPE_VARIABLE ) {
+					Emit( I_STOREA, var->address ); 
+				}
+				else {
+					printf("error in parse rest of statement default case");
+					KillCodeGeneration(); 
+				} 
+			break; 
+		}
     }
 }
 
@@ -566,25 +593,22 @@ PRIVATE void ParseSubTerm(void)
     SYMBOL *var;
     switch(CurrentToken.code)
     {
+		case INTCONST:
+			Emit(I_LOADI,CurrentToken.value);
+			ParseIntConst(); /* ParseIntConst() --> Accept(INTCONST) */
+			break;
+        case LEFTPARENTHESIS:
+			Accept(LEFTPARENTHESIS);
+			ParseExpression();
+			Accept(RIGHTPARENTHESIS);
+			break;
         case IDENTIFIER:
         default:
-        var = LookupSymbol();
-        if(var != NULL && var->type == STYPE_VARIABLE) Emit(I_LOADA,var->address);
-        else printf("Name undeclared or not a variable..!!");
-        ParseVariable(); /* ParseVariable() --> ParseIdentifier() --> Accept(IDENTIFIER); */
-        break;
-
-        case INTCONST:
-        Emit(I_LOADI,CurrentToken.value);
-        ParseIntConst(); /* ParseIntConst() --> Accept(INTCONST) */
-        break;
-
-        case LEFTPARENTHESIS:
-        Accept(LEFTPARENTHESIS);
-        ParseExpression();
-        Accept(RIGHTPARENTHESIS);
-        break;
-
+			var = LookupSymbol();
+			if(var != NULL && var->type == STYPE_VARIABLE) Emit(I_LOADA,var->address);
+			else printf("Name undeclared or not a variable..!!");
+			ParseVariable(); /* ParseVariable() --> ParseIdentifier() --> Accept(IDENTIFIER); */
+			break;     
     }
 }
 
@@ -908,11 +932,14 @@ PRIVATE void MakeSymbolTableEntry( int symtype )
                exit(EXIT_FAILURE);
            }
            else {
-               if ( oldsptr == NULL ) PreserveString();
+               if ( oldsptr == NULL ) {
+					PreserveString();
+				}
                newsptr->scope = scope;
                newsptr->type = symtype;
                if ( symtype == STYPE_VARIABLE ) {
-                   newsptr->address = varaddress; varaddress++;
+                   newsptr->address = varaddress;
+                   varaddress++;
                    /*if ( symtype == STYPE_LOCALVAR) //not needed by comp1.c
                        newsptr->address = varaddress;
                    varaddress++;
@@ -926,15 +953,10 @@ PRIVATE void MakeSymbolTableEntry( int symtype )
            printf("Error, variable already declared...!!\n");
        }
    }
+   else {
+	   printf("current token not identifier");
+   }
 }
-
-
-
-
-
-
-
-
 
 
 PRIVATE SYMBOL *LookupSymbol(void){
