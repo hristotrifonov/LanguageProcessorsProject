@@ -147,7 +147,7 @@ PUBLIC int main ( int argc, char *argv[] )
 PRIVATE void ParseProgram(void)
 {
     Accept(PROGRAM);
-    /*Lookahead token it should be the Program's name, so we call the MakeSymbolTableEntery*/
+    /*Lookahead token it should be the Program's name, so we call the MakeSymbolTableEntry*/
     MakeSymbolTableEntry(STYPE_PROGRAM);
 
     Accept(IDENTIFIER);
@@ -174,18 +174,24 @@ PRIVATE void ParseProgram(void)
 
 PRIVATE void ParseDeclarations(void)
 {
+
     Accept(VAR);
 
     MakeSymbolTableEntry(STYPE_VARIABLE);
-    ParseVariable(); /* ParseVariable() --> ParseIdentifier() --> Accept(IDENTIFIER); */
+    Accept(IDENTIFIER);
+    /*ParseVariable();  ParseVariable() --> ParseIdentifier() --> Accept(IDENTIFIER);*/
 
     while (CurrentToken.code == COMMA)
     {
         Accept(COMMA);
         MakeSymbolTableEntry(STYPE_VARIABLE);
-        ParseVariable(); /* ParseVariable() --> ParseIdentifier() --> Accept(IDENTIFIER); */
+        Accept(IDENTIFIER);
+
+        /*ParseVariable(); ParseVariable() --> ParseIdentifier() --> Accept(IDENTIFIER);*/
+        /*ParseIdentifier();*/
     }
     Accept(SEMICOLON);
+
 }
 
 /*--------------------------------------------------------------------------*/
@@ -331,7 +337,7 @@ PRIVATE void ParseStatement(void)
 
 PRIVATE void ParseSimpleStatement(void)
 {
-    MakeSymbolTableEntry(STYPE_VARIABLE);
+    var = LookupSymbol();
     ParseVariable(); /* ParseVariable() --> ParseIdentifier() --> Accept(IDENTIFIER); */
     ParseRestOfStatement();
 }
@@ -573,7 +579,11 @@ PRIVATE void ParseSubTerm(void)
         ParseIntConst(); /* ParseIntConst() --> Accept(INTCONST) */
         break;
 
-        case LEFTPARENTHESIS:Accept(LEFTPARENTHESIS); ParseExpression(); Accept(RIGHTPARENTHESIS); break;
+        case LEFTPARENTHESIS:
+        Accept(LEFTPARENTHESIS);
+        ParseExpression();
+        Accept(RIGHTPARENTHESIS);
+        break;
 
     }
 }
@@ -887,8 +897,11 @@ PRIVATE void MakeSymbolTableEntry( int symtype )
 
     if( CurrentToken.code == IDENTIFIER )
     {
-       if ( NULL == ( oldsptr = Probe( CurrentToken.s, &hashindex )) || oldsptr->scope < scope ) {
-           if ( oldsptr == NULL ) cptr = CurrentToken.s; else cptr = oldsptr->s;
+       if ( NULL == ( oldsptr = Probe( CurrentToken.s, &hashindex )) || oldsptr->scope < scope )
+       {
+           if ( oldsptr == NULL ) cptr = CurrentToken.s;
+            else cptr = oldsptr->s;
+
            if ( NULL == ( newsptr = EnterSymbol( cptr, hashindex ))) {
                /*〈Fatal internal error in EnterSymbol, compiler must exit: code for this goes here〉*/
                printf("Fatal internal error in EnterSymbol..!!\n");
@@ -900,6 +913,11 @@ PRIVATE void MakeSymbolTableEntry( int symtype )
                newsptr->type = symtype;
                if ( symtype == STYPE_VARIABLE ) {
                    newsptr->address = varaddress; varaddress++;
+                   /*if ( symtype == STYPE_LOCALVAR) //not needed by comp1.c
+                       newsptr->address = varaddress;
+                   varaddress++;
+                       scope++;*/
+
                }
                else newsptr->address = -1;
            }
@@ -909,6 +927,7 @@ PRIVATE void MakeSymbolTableEntry( int symtype )
        }
    }
 }
+
 
 
 
