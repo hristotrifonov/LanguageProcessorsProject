@@ -148,7 +148,7 @@ PUBLIC int main ( int argc, char *argv[] )
 
 PRIVATE void ParseProgram(void)
 {
-	
+
     Accept(PROGRAM);
     /*Lookahead token it should be the Program's name, so we call the MakeSymbolTableEntry*/
     MakeSymbolTableEntry(STYPE_PROGRAM);
@@ -164,6 +164,7 @@ PRIVATE void ParseProgram(void)
     Synchronise(&ProgramStatementFS_aug2,&ProgramStatementFBS);
     ParseBlock();
     Accept(ENDOFPROGRAM);
+    _Emit(I_HALT);
 }
 
 /*--------------------------------------------------------------------------*/
@@ -177,18 +178,18 @@ PRIVATE void ParseProgram(void)
 
 PRIVATE void ParseDeclarations(void)
 {
-	int varcount = 0;
+    int varcount = 0;
     Accept(VAR);
-	
+
     MakeSymbolTableEntry(STYPE_VARIABLE);
     Accept(IDENTIFIER);
-	varcount++;
+    varcount++;
     while (CurrentToken.code == COMMA)
     {
         Accept(COMMA);
         MakeSymbolTableEntry(STYPE_VARIABLE);
         Accept(IDENTIFIER);
-		varcount++;        
+        varcount++;
     }
     Accept(SEMICOLON);
     Emit(I_INC, varcount);
@@ -359,31 +360,31 @@ PRIVATE void ParseRestOfStatement(SYMBOL *var)
     switch(CurrentToken.code)
     {
         case LEFTPARENTHESIS:
-			ParseProcCallList(); 
-		case SEMICOLON: 
-			if ( var != NULL ) {
-				if ( var->type == STYPE_PROCEDURE ) {
-					Emit( I_CALL, var->address ); 
-				}
-				else { 
-					printf("error in parse rest of statement semicolon case");
-					KillCodeGeneration(); 
-				} 
-			}
-			break; 
+            ParseProcCallList();
+        case SEMICOLON:
+            if ( var != NULL ) {
+                if ( var->type == STYPE_PROCEDURE ) {
+                    Emit( I_CALL, var->address );
+                }
+                else {
+                    printf("error in parse rest of statement semicolon case");
+                    KillCodeGeneration();
+                }
+            }
+            break;
         case ASSIGNMENT:
-        default: 
-			ParseAssignment(); 
-			if ( var != NULL ) {
-				if ( var->type == STYPE_VARIABLE ) {
-					Emit( I_STOREA, var->address ); 
-				}
-				else {
-					printf("error in parse rest of statement default case");
-					KillCodeGeneration(); 
-				} 
-			break; 
-		}
+        default:
+            ParseAssignment();
+            if ( var != NULL ) {
+                if ( var->type == STYPE_VARIABLE ) {
+                    Emit( I_STOREA, var->address );
+                }
+                else {
+                    printf("error in parse rest of statement default case");
+                    KillCodeGeneration();
+                }
+            break;
+        }
     }
 }
 
@@ -593,22 +594,22 @@ PRIVATE void ParseSubTerm(void)
     SYMBOL *var;
     switch(CurrentToken.code)
     {
-		case INTCONST:
-			Emit(I_LOADI,CurrentToken.value);
-			ParseIntConst(); /* ParseIntConst() --> Accept(INTCONST) */
-			break;
+        case INTCONST:
+            Emit(I_LOADI,CurrentToken.value);
+            ParseIntConst(); /* ParseIntConst() --> Accept(INTCONST) */
+            break;
         case LEFTPARENTHESIS:
-			Accept(LEFTPARENTHESIS);
-			ParseExpression();
-			Accept(RIGHTPARENTHESIS);
-			break;
+            Accept(LEFTPARENTHESIS);
+            ParseExpression();
+            Accept(RIGHTPARENTHESIS);
+            break;
         case IDENTIFIER:
         default:
-			var = LookupSymbol();
-			if(var != NULL && var->type == STYPE_VARIABLE) Emit(I_LOADA,var->address);
-			else printf("Name undeclared or not a variable..!!");
-			ParseVariable(); /* ParseVariable() --> ParseIdentifier() --> Accept(IDENTIFIER); */
-			break;     
+            var = LookupSymbol();
+            if(var != NULL && var->type == STYPE_VARIABLE) Emit(I_LOADA,var->address);
+            else printf("Name undeclared or not a variable..!!");
+            ParseVariable(); /* ParseVariable() --> ParseIdentifier() --> Accept(IDENTIFIER); */
+            break;
     }
 }
 
@@ -917,7 +918,6 @@ PRIVATE void MakeSymbolTableEntry( int symtype )
     SYMBOL *oldsptr;
     char *cptr;
     int hashindex;
-    int varaddress = 0;
 
     if( CurrentToken.code == IDENTIFIER )
     {
@@ -933,8 +933,8 @@ PRIVATE void MakeSymbolTableEntry( int symtype )
            }
            else {
                if ( oldsptr == NULL ) {
-					PreserveString();
-				}
+                    PreserveString();
+                }
                newsptr->scope = scope;
                newsptr->type = symtype;
                if ( symtype == STYPE_VARIABLE ) {
@@ -954,7 +954,7 @@ PRIVATE void MakeSymbolTableEntry( int symtype )
        }
    }
    else {
-	   printf("current token not identifier");
+       printf("current token not identifier");
    }
 }
 
