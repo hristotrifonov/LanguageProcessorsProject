@@ -117,7 +117,7 @@ PUBLIC int main ( int argc, char *argv[] )
         SetupSets();
         ParseProgram();
         WriteCodeFile();  /*Write out assembly to file*/
-        fclose(CodeFile); /*Close Assembly file*/
+        /*fclose(CodeFile); Close Assembly file*/
         fclose( InputFile );
         fclose( ListFile );
         printf("Valid\n");
@@ -640,10 +640,15 @@ PRIVATE void ParseBooleanExpression(void)
 
 PRIVATE void ParseAddOp(void)
 {
+    /*TODO revert to parser1 and add return of operator type*/
     switch(CurrentToken.code)
     {
-        case ADD: _Emit(I_ADD); Accept(ADD); break;    /* Question: _Emit used here? */
-        case SUBTRACT: _Emit(I_SUB); Accept(SUBTRACT); break;
+        case ADD:
+            Accept(ADD);
+            break;
+        case SUBTRACT:
+            Accept(SUBTRACT);
+            break;
         default:
         SyntaxError( IDENTIFIER, CurrentToken );
         break;
