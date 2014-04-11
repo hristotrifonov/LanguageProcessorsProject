@@ -193,7 +193,7 @@ PRIVATE void ParseDeclarations(void)
     }
     Accept(SEMICOLON);
     Emit(I_INC,vcount);
-    DumpSymbols(0);
+
 }
 
 /*--------------------------------------------------------------------------*/
@@ -359,30 +359,30 @@ PRIVATE void ParseRestOfStatement(SYMBOL *var)
     switch(CurrentToken.code)
     {
         case LEFTPARENTHESIS:
-            ParseProcCallList(); 
-        case SEMICOLON: 
+            ParseProcCallList();
+        case SEMICOLON:
             if ( var != NULL ) {
                 if ( var->type == STYPE_PROCEDURE ) {
-                    Emit( I_CALL, var->address ); 
+                    Emit( I_CALL, var->address );
                 }
-                else { 
+                else {
                     printf("error in parse rest of statement semicolon case");
-                    KillCodeGeneration(); 
-                } 
+                    KillCodeGeneration();
+                }
             }
-            break; 
+            break;
         case ASSIGNMENT:
-        default: 
-            ParseAssignment(); 
+        default:
+            ParseAssignment();
             if ( var != NULL ) {
                 if ( var->type == STYPE_VARIABLE ) {
-                    Emit( I_STOREA, var->address ); 
+                    Emit( I_STOREA, var->address );
                 }
                 else {
                     printf("error in parse rest of statement default case");
-                    KillCodeGeneration(); 
-                } 
-            break; 
+                    KillCodeGeneration();
+                }
+            break;
         }
     }
 }
@@ -636,9 +636,9 @@ PRIVATE int ParseBooleanExpression(void)
     ParseExpression();
     _Emit( I_SUB );
     ParseRelOp();
-    BackPatchAddr = CurrentCodeAddress( ); 
-    Emit( RelOpInstruction, 0 ); 
-    return BackPatchAddr; 
+    BackPatchAddr = CurrentCodeAddress( );
+    Emit( RelOpInstruction, 0 );
+    return BackPatchAddr;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -655,9 +655,9 @@ PRIVATE void ParseAddOp(void)
     /*TODO revert to parser1 and add return of operator type*/
     switch(CurrentToken.code)
     {
-        case ADD:  
+        case ADD:
         Accept(ADD); break;    /* Question: _Emit used here? */
-        case SUBTRACT:  
+        case SUBTRACT:
         Accept(SUBTRACT); break;
         default:
         SyntaxError( IDENTIFIER, CurrentToken );
@@ -795,6 +795,7 @@ PRIVATE void Accept( int ExpectedToken )
 
     if ( CurrentToken.code != ExpectedToken )  {
         SyntaxError( ExpectedToken, CurrentToken );
+         KillCodeGeneration();
         recovering = 1;
     }
     else  CurrentToken = GetToken();
@@ -969,6 +970,7 @@ PRIVATE void MakeSymbolTableEntry( int symtype )
        }
        else { /*〈Error, variable already declared: code for this goes here〉*/
            printf("Error, variable already declared...!!\n");
+            KillCodeGeneration();
        }
    }
    else {
