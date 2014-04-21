@@ -33,7 +33,6 @@
 PRIVATE FILE *InputFile;           /*  CPL source comes from here.          */
 PRIVATE FILE *ListFile;            /*  For nicely-formatted syntax errors.  */
 PRIVATE FILE *CodeFile;
-PRIVATE int varaddress;
 
 PRIVATE TOKEN  CurrentToken;       /*  Parser lookahead token.  Updated by  */
                                    /*  routine Accept (below).  Must be     */
