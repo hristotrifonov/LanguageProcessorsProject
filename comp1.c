@@ -34,7 +34,9 @@ PRIVATE FILE *InputFile;           /*  CPL source comes from here.          */
 PRIVATE FILE *ListFile;            /*  For nicely-formatted syntax errors.  */
 PRIVATE FILE *CodeFile;
 PRIVATE int varaddress;
-
+PRIVATE int writing;
+PRIVATE int reading;
+PRIVATE int ERROR_FLAG;            /* if any syntax errors are detected set to 1*/
 PRIVATE TOKEN  CurrentToken;       /*  Parser lookahead token.  Updated by  */
                                    /*  routine Accept (below).  Must be     */
                                    /*  initialised before parser starts.    */
@@ -108,17 +110,24 @@ PRIVATE void ParseIdentifier(void);
 
 PUBLIC int main ( int argc, char *argv[] )
 {
+    ERROR_FLAG=0;
+    varaddress = 0;
+    writing=0;
+    reading = 0;
     if ( OpenFiles( argc, argv ) )
     {
         InitCharProcessor( InputFile, ListFile );
         InitCodeGenerator(CodeFile); /*Initialize code generation*/
         CurrentToken = GetToken();
-        varaddress = 0;
         SetupSets();
         ParseProgram();
         WriteCodeFile();  /*Write out assembly to file*/
         fclose( InputFile );
         fclose( ListFile );
+        if(!ERROR_FLAG) {
+            printf("Syntax Error\n");
+            return EXIT_FAILURE;
+        }
         printf("Valid\n");
         return  EXIT_SUCCESS;
     }
@@ -400,12 +409,24 @@ PRIVATE void ParseRestOfStatement(SYMBOL *var)
 PRIVATE void ParseProcCallList(void)
 {
     Accept(LEFTPARENTHESIS);
+    if(reading) {                 /*execute READ before each parameter*/
+        _Emit(I_READ);
+    }
     ParseActualParameter();
-
+    if(writing) {               /*execute WRITE after each parameter*/
+       _Emit(I_WRITE);
+    }
     while (CurrentToken.code == COMMA)
     {
         Accept(COMMA);
+        if(reading) {
+            _Emit(I_READ);
+        }
+
         ParseActualParameter();
+        if(writing) {
+           _Emit(I_WRITE);
+        }
     }
     Accept(RIGHTPARENTHESIS);
 }
@@ -496,9 +517,11 @@ PRIVATE void ParseIfStatement(void)
 
 PRIVATE void ParseReadStatement(void)
 {
-    _Emit(I_READ);
+
+    reading = 1;
     Accept(READ);
     ParseProcCallList();
+    reading = 0;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -512,9 +535,10 @@ PRIVATE void ParseReadStatement(void)
 
 PRIVATE void ParseWriteStatement(void)
 {
+    writing = 1;
     Accept(WRITE);
     ParseProcCallList();
-    _Emit(I_WRITE);
+
 }
 
 /*--------------------------------------------------------------------------*/
@@ -580,9 +604,11 @@ PRIVATE void ParseTerm(void)
         negative_flag = 1;
         Accept(SUBTRACT);
     }
-    ParseSubTerm();
 
-    if(negative_flag) _Emit(I_NEG);
+    ParseSubTerm();
+    if(negative_flag) {
+       _Emit(I_NEG);
+    }
 }
 
 /*--------------------------------------------------------------------------*/
@@ -612,7 +638,17 @@ PRIVATE void ParseSubTerm(void)
         case IDENTIFIER:
         default:
             var = LookupSymbol();
-            if(var != NULL && var->type == STYPE_VARIABLE) Emit(I_LOADA,var->address);
+            if(var != NULL && var->type == STYPE_VARIABLE) {
+                if (writing) {
+                    Emit(I_LOADA,var->address); /*Load the parameter value*/
+                }
+                else if (reading) {
+                    Emit(I_STOREA,var->address); /*Store user input into each parameter*/
+                }
+                else {
+                    Emit(I_LOADA,var->address);
+                }
+            }
             else printf("Name undeclared or not a variable..!!");
             ParseVariable(); /* ParseVariable() --> ParseIdentifier() --> Accept(IDENTIFIER); */
             break;
@@ -634,7 +670,6 @@ PRIVATE int ParseBooleanExpression(void)
     ParseExpression();
     RelOpInstruction = ParseRelOp();
     ParseExpression();
-    _Emit( I_SUB );
     ParseRelOp();
     BackPatchAddr = CurrentCodeAddress( );
     Emit( RelOpInstruction, 0 );
@@ -797,6 +832,7 @@ PRIVATE void Accept( int ExpectedToken )
         SyntaxError( ExpectedToken, CurrentToken );
          KillCodeGeneration();
         recovering = 1;
+        ERROR_FLAG=1;
     }
     else  CurrentToken = GetToken();
 }
