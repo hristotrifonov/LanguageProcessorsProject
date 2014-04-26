@@ -130,7 +130,7 @@ PUBLIC int main ( int argc, char *argv[] )
     {
     InitCharProcessor( InputFile, ListFile );
     CurrentToken = GetToken();
-    SetupSets(); 
+    SetupSets();
     ParseProgram();
     fclose( InputFile );
     fclose( ListFile );
@@ -655,10 +655,6 @@ PRIVATE void ParseVariable(void)
 PRIVATE void ParseIntConst(void)
 {
     Accept(INTCONST);
-    while(CurrentToken.code == INTCONST)
-    {
-        Accept(INTCONST);
-    }
 }
 
 /*--------------------------------------------------------------------------*/
@@ -671,10 +667,6 @@ PRIVATE void ParseIntConst(void)
 PRIVATE void ParseIdentifier(void)
 {
     Accept(IDENTIFIER);
-    while(CurrentToken.code == IDENTIFIER)
-    {
-        Accept(IDENTIFIER);
-    }
 }
 
 /*--------------------------------------------------------------------------*/
@@ -817,7 +809,7 @@ PRIVATE void SetupSets(void){
 
 PRIVATE int  OpenFiles( int argc, char *argv[] )
 {
-    
+
 
 
     if ( argc != 3 )  {
