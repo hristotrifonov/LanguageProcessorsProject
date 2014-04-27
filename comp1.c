@@ -670,7 +670,7 @@ PRIVATE int ParseBooleanExpression(void)
     ParseExpression();
     RelOpInstruction = ParseRelOp();
     ParseExpression();
-    ParseRelOp();
+    _Emit(I_SUB);
     BackPatchAddr = CurrentCodeAddress( );
     Emit( RelOpInstruction, 0 );
     return BackPatchAddr;
@@ -735,11 +735,26 @@ PRIVATE int ParseRelOp(void)
     int RelOpInstruction;
     switch(CurrentToken.code)
     {
-        case EQUALITY: RelOpInstruction = I_BZ; Accept(EQUALITY); break;
-        case LESSEQUAL: RelOpInstruction = I_BG; Accept(LESSEQUAL); break;
-        case GREATEREQUAL: RelOpInstruction = I_BL; Accept(GREATEREQUAL); break;
-        case LESS: RelOpInstruction = I_BGZ; Accept(LESS); break;
-        case GREATER: RelOpInstruction = I_BLZ; Accept(GREATER); break;
+        case EQUALITY:
+            RelOpInstruction = I_BZ;
+            Accept(EQUALITY);
+            break;
+        case LESSEQUAL:
+            RelOpInstruction = I_BG;
+            Accept(LESSEQUAL);
+            break;
+        case GREATEREQUAL:
+            RelOpInstruction = I_BL;
+            Accept(GREATEREQUAL);
+            break;
+        case LESS:
+            RelOpInstruction = I_BGZ;
+            Accept(LESS);
+            break;
+        case GREATER:
+            RelOpInstruction = I_BLZ;
+            Accept(GREATER);
+            break;
 
     }
     return RelOpInstruction;
@@ -958,24 +973,25 @@ PRIVATE int  OpenFiles( int argc, char *argv[] )
 }
 
 
-
-
-
-
-
-
+/*--------------------------------------------------------------------------*/
+/* PRIVATE void MakeSymbolTableEntry( int symtype ) creates entries in the  */
+/* Symbol Table, which is organized as a Chaining Hash Table. Takes an argu */
+/* ment symbol type(symtype) defined in the "symbol.h" header file.         */
+/* Uses pointers to symbol location to navigate through the symbol table    */
+/* entries. In general maps the identifier with the information record.     */
+/*--------------------------------------------------------------------------*/
 
 PRIVATE void MakeSymbolTableEntry( int symtype )
 {
    /*〈Variable Declarations here〉*/
-    SYMBOL *newsptr;
-    SYMBOL *oldsptr;
-    char *cptr;
+    SYMBOL *newsptr; /*new symbol pointer*/
+    SYMBOL *oldsptr; /*old symbol pointer*/
+    char *cptr;      /*current pointer*/
     int hashindex;
     static int varaddress = 0;
 
     if( CurrentToken.code == IDENTIFIER )
-    {
+    {      /* check to see if there is an entry in the symbol table with the same name as IDENTIFIER */
        if ( NULL == ( oldsptr = Probe( CurrentToken.s, &hashindex )) || oldsptr->scope < scope )
        {
            if ( oldsptr == NULL ) cptr = CurrentToken.s;
