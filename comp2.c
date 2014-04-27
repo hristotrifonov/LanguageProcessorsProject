@@ -1,6 +1,6 @@
 /*--------------------------------------------------------------------------*/
 /*                                                                          */
-/*       comp1                                                            */
+/*       comp2                                                              */
 /*                                                                          */
 /*                                                                          */
 /*       Group Members:         ID numbers                                  */
@@ -33,8 +33,8 @@
 PRIVATE FILE *InputFile;           /*  CPL source comes from here.          */
 PRIVATE FILE *ListFile;            /*  For nicely-formatted syntax errors.  */
 PRIVATE FILE *CodeFile;
-PRIVATE int varaddress;
-PRIVATE int writing;
+PRIVATE int varaddress;			   
+PRIVATE int writing;               /* set to one while parsing arguments*/
 PRIVATE int reading;
 PRIVATE int ERROR_FLAG;            /* if any syntax errors are detected set to 1*/
 PRIVATE TOKEN  CurrentToken;       /*  Parser lookahead token.  Updated by  */
@@ -126,7 +126,7 @@ PUBLIC int main ( int argc, char *argv[] )
         fclose( InputFile );
         fclose( ListFile );
         if(ERROR_FLAG) {
-            printf("Syntax Error\n");
+            printf("Syntax Error\n");/*code file has syntax error*/
             return EXIT_FAILURE;
         }
         printf("Valid\n");
@@ -134,7 +134,7 @@ PUBLIC int main ( int argc, char *argv[] )
     }
     else
     {
-        printf("Syntax Error\n");
+        printf("Syntax Error\n"); /*command line arguments are wrong*/
         return EXIT_FAILURE;
     }
 }
