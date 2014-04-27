@@ -13,7 +13,7 @@
 /*--------------------------------------------------------------------------*/
 
 /*--------------------------------------------------------------------------*/
-                                                      
+
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -636,10 +636,6 @@ PRIVATE void ParseVariable(void)
 PRIVATE void ParseIntConst(void)
 {
     Accept(INTCONST);
-    while(CurrentToken.code == INTCONST)
-    {
-        Accept(INTCONST);
-    }
 }
 
 /*--------------------------------------------------------------------------*/
@@ -654,10 +650,7 @@ PRIVATE void ParseIntConst(void)
 PRIVATE void ParseIdentifier(void)
 {
     Accept(IDENTIFIER);
-    while(CurrentToken.code == IDENTIFIER)
-    {
-        Accept(IDENTIFIER);
-    }
+
 }
 
 /*--------------------------------------------------------------------------*/
@@ -783,4 +776,3 @@ PRIVATE void ReadToEndOfFile( void )
     while ( CurrentToken.code != ENDOFINPUT )  CurrentToken = GetToken();
     }
 }
-
