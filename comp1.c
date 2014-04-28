@@ -1011,12 +1011,7 @@ PRIVATE void MakeSymbolTableEntry( int symtype )
                newsptr->type = symtype;
                if ( symtype == STYPE_VARIABLE ) {
                    newsptr->address = varaddress;
-                   varaddress++;
-                   /*if ( symtype == STYPE_LOCALVAR) //not needed by comp1.c
-                       newsptr->address = varaddress;
-                   varaddress++;
-                       scope++;*/
-
+                   varaddress++;                 
                }
                else newsptr->address = -1;
            }
