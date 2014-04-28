@@ -34,13 +34,13 @@ PRIVATE FILE *InputFile;           /*  CPL source comes from here.          */
 PRIVATE FILE *ListFile;            /*  For nicely-formatted syntax errors.  */
 PRIVATE FILE *CodeFile;
 PRIVATE int varaddress;
-PRIVATE int writing;
+PRIVATE int writing;               /* set to one while parsing arguments*/
 PRIVATE int reading;
 PRIVATE int ERROR_FLAG;            /* if any syntax errors are detected set to 1*/
 PRIVATE TOKEN  CurrentToken;       /*  Parser lookahead token.  Updated by  */
                                    /*  routine Accept (below).  Must be     */
                                    /*  initialised before parser starts.    */
-
+PRIVATE int scope;
 
 /*--------------------------------------------------------------------------*/
 /*                                                                          */
@@ -48,7 +48,7 @@ PRIVATE TOKEN  CurrentToken;       /*  Parser lookahead token.  Updated by  */
 /*                                                                          */
 /*--------------------------------------------------------------------------*/
 
-PRIVATE int scope = 1;
+
 
 
 PRIVATE int  OpenFiles( int argc, char *argv[] );
@@ -114,6 +114,7 @@ PUBLIC int main ( int argc, char *argv[] )
     varaddress = 0;
     writing=0;
     reading = 0;
+    scope = 1;
     if ( OpenFiles( argc, argv ) )
     {
         InitCharProcessor( InputFile, ListFile );
@@ -848,6 +849,7 @@ PRIVATE void Accept( int ExpectedToken )
          KillCodeGeneration();
         recovering = 1;
         ERROR_FLAG=1;
+        
     }
     else  CurrentToken = GetToken();
 }

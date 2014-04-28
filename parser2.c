@@ -31,6 +31,7 @@
 
 PRIVATE FILE *InputFile;           /*  CPL source comes from here.          */
 PRIVATE FILE *ListFile;            /*  For nicely-formatted syntax errors.  */
+PRIVATE int ERROR_FLAG;            /* if any syntax errors are detected set to 1*/
 
 PRIVATE TOKEN  CurrentToken;       /*  Parser lookahead token.  Updated by  */
                                    /*  routine Accept (below).  Must be     */
@@ -126,6 +127,7 @@ PRIVATE void ParseIdentifier(void);
 
 PUBLIC int main ( int argc, char *argv[] )
 {
+	ERROR_FLAG=0;
     if ( OpenFiles( argc, argv ) )
     {
     InitCharProcessor( InputFile, ListFile );
@@ -134,6 +136,10 @@ PUBLIC int main ( int argc, char *argv[] )
     ParseProgram();
     fclose( InputFile );
     fclose( ListFile );
+    if(!ERROR_FLAG) {
+		printf("Syntax Error\n");
+        return EXIT_FAILURE;
+    }
     printf("Valid\n");
     return  EXIT_SUCCESS;
     }
@@ -711,8 +717,9 @@ PRIVATE void Accept( int ExpectedToken )
     }
 
     if ( CurrentToken.code != ExpectedToken )  {
-    SyntaxError( ExpectedToken, CurrentToken );
-    recovering = 1;
+		SyntaxError( ExpectedToken, CurrentToken );
+		recovering = 1;
+		ERROR_FLAG=1;
     }
     else  CurrentToken = GetToken();
 }
