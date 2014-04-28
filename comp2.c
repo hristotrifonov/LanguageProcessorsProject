@@ -1,6 +1,6 @@
 /*--------------------------------------------------------------------------*/
 /*                                                                          */
-/*       comp1                                                            */
+/*       comp2                                                              */
 /*                                                                          */
 /*                                                                          */
 /*       Group Members:         ID numbers                                  */
@@ -32,15 +32,15 @@
 
 PRIVATE FILE *InputFile;           /*  CPL source comes from here.          */
 PRIVATE FILE *ListFile;            /*  For nicely-formatted syntax errors.  */
-PRIVATE FILE *CodeFile;
-PRIVATE int varaddress;
-PRIVATE int writing;
-PRIVATE int reading;
+PRIVATE FILE *CodeFile;			   /* machine code output file */
+PRIVATE int varaddress;			   /* incremented each time a new symbol table entry made */
+PRIVATE int writing;               /* set to one while parsing arguments*/
+PRIVATE int reading;			   /* set to one while parsing arguments*/
 PRIVATE int ERROR_FLAG;            /* if any syntax errors are detected set to 1*/
 PRIVATE TOKEN  CurrentToken;       /*  Parser lookahead token.  Updated by  */
                                    /*  routine Accept (below).  Must be     */
                                    /*  initialised before parser starts.    */
-
+PRIVATE int scope;
 
 /*--------------------------------------------------------------------------*/
 /*                                                                          */
@@ -48,7 +48,7 @@ PRIVATE TOKEN  CurrentToken;       /*  Parser lookahead token.  Updated by  */
 /*                                                                          */
 /*--------------------------------------------------------------------------*/
 
-PRIVATE int scope = 1;
+
 
 
 PRIVATE int  OpenFiles( int argc, char *argv[] );
@@ -115,6 +115,7 @@ PUBLIC int main ( int argc, char *argv[] )
     varaddress = 0;
     writing=0;
     reading = 0;
+    scope = 1;
     if ( OpenFiles( argc, argv ) )
     {
         InitCharProcessor( InputFile, ListFile );
@@ -126,7 +127,7 @@ PUBLIC int main ( int argc, char *argv[] )
         fclose( InputFile );
         fclose( ListFile );
         if(ERROR_FLAG) {
-            printf("Syntax Error\n");
+            printf("Syntax Error\n");/*code file has syntax error*/
             return EXIT_FAILURE;
         }
         printf("Valid\n");
@@ -134,7 +135,7 @@ PUBLIC int main ( int argc, char *argv[] )
     }
     else
     {
-        printf("Syntax Error\n");
+        printf("Syntax Error\n"); /*command line arguments are wrong*/
         return EXIT_FAILURE;
     }
 }
@@ -203,7 +204,7 @@ PRIVATE int ParseDeclarations(void)
     }
     Accept(SEMICOLON);
     Emit(I_INC,vcount);
-return vcount;
+return vcount; /* used in parseProcDeclarations to know how much to decrement */
 }
 
 /*--------------------------------------------------------------------------*/
@@ -242,20 +243,6 @@ PRIVATE void ParseProcDeclaration(void)
     _Emit( I_RET );
     BackPatch( backpatch_addr, CurrentCodeAddress() );
 
-
-    /*if(CurrentToken.code == LEFTPARENTHESIS)
-        ParseParameterList();*/
-
-    /*Accept(SEMICOLON);
-    Synchronise(&ProcedureStatementFS_aug1,&ProcedureStatementFBS);
-    if(CurrentToken.code == VAR)
-        ParseDeclarations();
-    Synchronise(&ProcedureStatementFS_aug2,&ProcedureStatementFBS);
-    while (CurrentToken.code == PROCEDURE)
-        ParseProcDeclaration();
-    Synchronise(&ProcedureStatementFS_aug2,&ProcedureStatementFBS);
-    ParseBlock();
-    Accept(SEMICOLON);*/
     RemoveSymbols(scope);
 
     scope--;
@@ -295,7 +282,7 @@ PRIVATE void ParseParameterList(void)
 PRIVATE void ParseFormalParameter(void)
 {
     if(CurrentToken.code == REF){
-        MakeSymbolTableEntry(STYPE_REFPAR); /* Question */
+        MakeSymbolTableEntry(STYPE_REFPAR); 
         Accept(REF);
     }
 
@@ -440,11 +427,11 @@ PRIVATE void ParseRestOfStatement(SYMBOL *var)
 PRIVATE void ParseProcCallList(void)
 {
     Accept(LEFTPARENTHESIS);
-    if(reading) {                 /*execute READ before each parameter*/
+    if(reading) {                 /*emit READ before each parameter*/
         _Emit(I_READ);
     }
     ParseActualParameter();
-    if(writing) {               /*execute WRITE after each parameter*/
+    if(writing) {               /*emit WRITE after each parameter*/
        _Emit(I_WRITE);
     }
     while (CurrentToken.code == COMMA)
@@ -733,11 +720,10 @@ PRIVATE int ParseBooleanExpression(void)
 
 PRIVATE void ParseAddOp(void)
 {
-    /*TODO revert to parser1 and add return of operator type*/
     switch(CurrentToken.code)
     {
         case ADD:
-        Accept(ADD); break;    /* Question: _Emit used here? */
+        Accept(ADD); break;   
         case SUBTRACT:
         Accept(SUBTRACT); break;
         default:
@@ -878,7 +864,7 @@ PRIVATE void Accept( int ExpectedToken )
         SyntaxError( ExpectedToken, CurrentToken );
          KillCodeGeneration();
         recovering = 1;
-        ERROR_FLAG=1;
+        ERROR_FLAG=1; /* for use in main to avoid printing valid*/
     }
     else  CurrentToken = GetToken();
 }
@@ -1005,12 +991,13 @@ PRIVATE int  OpenFiles( int argc, char *argv[] )
 
 
 
-
-
-
-
-
-
+/*--------------------------------------------------------------------------*/
+/* PRIVATE void MakeSymbolTableEntry( int symtype ) creates entries in the  */
+/* Symbol Table, which is organized as a Chaining Hash Table. Takes an argu */
+/* ment symbol type(symtype) defined in the "symbol.h" header file.         */
+/* Uses pointers to symbol location to navigate through the symbol table    */
+/* entries. In general maps the identifier with the information record.     */
+/*--------------------------------------------------------------------------*/
 PRIVATE SYMBOL *MakeSymbolTableEntry( int symtype)
 {
    /*〈Variable Declarations here〉*/
@@ -1057,7 +1044,17 @@ PRIVATE SYMBOL *MakeSymbolTableEntry( int symtype)
     return newsptr;
 }
 
-
+/*--------------------------------------------------------------------------*/
+/*  LookupSymbol:    used to check if symbol has been declared              */
+/*                                                                          */
+/*                                                                          */
+/*    Inputs:       none                                                    */
+/*                                                                          */
+/*    Outputs:      None                                                    */
+/*                                                                          */
+/*    Returns:      Symbol if it exists in symbol table                     */
+/*                                                                          */
+/*--------------------------------------------------------------------------*/
 PRIVATE SYMBOL *LookupSymbol(void){
 
     SYMBOL *sptr;
