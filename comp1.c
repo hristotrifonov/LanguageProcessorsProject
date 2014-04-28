@@ -278,7 +278,7 @@ PRIVATE void ParseParameterList(void)
 PRIVATE void ParseFormalParameter(void)
 {
     if(CurrentToken.code == REF){
-        MakeSymbolTableEntry(STYPE_REFPAR); /* Question */
+        MakeSymbolTableEntry(STYPE_REFPAR);
         Accept(REF);
     }
 
