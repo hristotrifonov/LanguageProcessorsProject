@@ -136,7 +136,7 @@ PUBLIC int main ( int argc, char *argv[] )
     ParseProgram();
     fclose( InputFile );
     fclose( ListFile );
-    if(!ERROR_FLAG) {
+    if(ERROR_FLAG) {
 		printf("Syntax Error\n");/*code file has syntax error*/
         return EXIT_FAILURE;
     }
