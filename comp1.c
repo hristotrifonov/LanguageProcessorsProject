@@ -32,10 +32,10 @@
 
 PRIVATE FILE *InputFile;           /*  CPL source comes from here.          */
 PRIVATE FILE *ListFile;            /*  For nicely-formatted syntax errors.  */
-PRIVATE FILE *CodeFile;
-PRIVATE int varaddress;
+PRIVATE FILE *CodeFile;			   /* machine code output file */
+PRIVATE int varaddress;			   /* incremented each time a new symbol table entry made */
 PRIVATE int writing;               /* set to one while parsing arguments*/
-PRIVATE int reading;
+PRIVATE int reading;			   /* set to one while parsing arguments*/
 PRIVATE int ERROR_FLAG;            /* if any syntax errors are detected set to 1*/
 PRIVATE TOKEN  CurrentToken;       /*  Parser lookahead token.  Updated by  */
                                    /*  routine Accept (below).  Must be     */
@@ -126,7 +126,7 @@ PUBLIC int main ( int argc, char *argv[] )
         fclose( InputFile );
         fclose( ListFile );
         if(!ERROR_FLAG) {
-            printf("Syntax Error\n");
+            printf("Syntax Error\n");/*code file has syntax error*/
             return EXIT_FAILURE;
         }
         printf("Valid\n");
@@ -134,7 +134,7 @@ PUBLIC int main ( int argc, char *argv[] )
     }
     else
     {
-        printf("Syntax Error\n");
+        printf("Syntax Error\n");/*command line arguments are wrong*/
         return EXIT_FAILURE;
     }
 }
@@ -410,11 +410,11 @@ PRIVATE void ParseRestOfStatement(SYMBOL *var)
 PRIVATE void ParseProcCallList(void)
 {
     Accept(LEFTPARENTHESIS);
-    if(reading) {                 /*execute READ before each parameter*/
+    if(reading) {                 /*emit READ before each parameter*/
         _Emit(I_READ);
     }
     ParseActualParameter();
-    if(writing) {               /*execute WRITE after each parameter*/
+    if(writing) {               /*emit WRITE after each parameter*/
        _Emit(I_WRITE);
     }
     while (CurrentToken.code == COMMA)
@@ -688,11 +688,10 @@ PRIVATE int ParseBooleanExpression(void)
 
 PRIVATE void ParseAddOp(void)
 {
-    /*TODO revert to parser1 and add return of operator type*/
     switch(CurrentToken.code)
     {
         case ADD:
-        Accept(ADD); break;    /* Question: _Emit used here? */
+        Accept(ADD); break; 
         case SUBTRACT:
         Accept(SUBTRACT); break;
         default:
@@ -848,7 +847,7 @@ PRIVATE void Accept( int ExpectedToken )
         SyntaxError( ExpectedToken, CurrentToken );
          KillCodeGeneration();
         recovering = 1;
-        ERROR_FLAG=1;
+        ERROR_FLAG=1; /* for use in main to avoid printing valid*/
         
     }
     else  CurrentToken = GetToken();
@@ -1032,7 +1031,17 @@ PRIVATE void MakeSymbolTableEntry( int symtype )
    }
 }
 
-
+/*--------------------------------------------------------------------------*/
+/*  LookupSymbol:    used to check if symbol has been declared              */
+/*                                                                          */
+/*                                                                          */
+/*    Inputs:       none                                                    */
+/*                                                                          */
+/*    Outputs:      None                                                    */
+/*                                                                          */
+/*    Returns:      Symbol if it exists in symbol table                     */
+/*                                                                          */
+/*--------------------------------------------------------------------------*/
 PRIVATE SYMBOL *LookupSymbol(void){
 
     SYMBOL *sptr;

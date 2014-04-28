@@ -137,7 +137,7 @@ PUBLIC int main ( int argc, char *argv[] )
     fclose( InputFile );
     fclose( ListFile );
     if(!ERROR_FLAG) {
-		printf("Syntax Error\n");
+		printf("Syntax Error\n");/*code file has syntax error*/
         return EXIT_FAILURE;
     }
     printf("Valid\n");
@@ -145,7 +145,7 @@ PUBLIC int main ( int argc, char *argv[] )
     }
     else
     {
-        printf("Syntax Error\n");
+        printf("Syntax Error\n");/*command line arguments are wrong*/
     return EXIT_FAILURE;
     }
 }
@@ -719,7 +719,7 @@ PRIVATE void Accept( int ExpectedToken )
     if ( CurrentToken.code != ExpectedToken )  {
 		SyntaxError( ExpectedToken, CurrentToken );
 		recovering = 1;
-		ERROR_FLAG=1;
+		ERROR_FLAG=1; /* for use in main to avoid printing "valid"*/
     }
     else  CurrentToken = GetToken();
 }
